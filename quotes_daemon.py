@@ -11,11 +11,20 @@ from settings import (
 )
 
 
-async def wss_connect(url: str,
+def normalize_name(ticker: str) -> str:
+    """
+    normalize name of ticker on Binance to the same
+    as on OKX
+    """
+    new_ticker_name = ticker[:3] + '-' + ticker[3:]
+    return new_ticker_name
+
+
+async def wss_get_quotes(url: str,
                       payloads: list,
                       quotes_codes: list = QUOTES_CODES,
                       request_frequency: int = 1) -> None:
-
+    """"""
     async with aiohttp.ClientSession() as session:
         async with session.ws_connect(url) as ws:
             while True:
@@ -30,7 +39,6 @@ async def wss_connect(url: str,
                                 if ticker in quotes:
                                     price = data['data'][0]['last']
                                     crypto_pairs[ticker] = price
-                                    quote = {ticker: price}
                                     quotes.remove(ticker)
                                     break
 
@@ -38,10 +46,7 @@ async def wss_connect(url: str,
                                 ticker = data['s']
                                 if ticker in quotes:
                                     price = data['c']
-                                    # here need handler to unifi name of quote in JSON
-                                    crypto_pairs[ticker] = price
-                                    # quote = {ticker: price}
-                                    # print(quote)
+                                    crypto_pairs[normalize_name(ticker)] = price
                                     quotes.remove(ticker)
                                     break
 
@@ -54,17 +59,21 @@ async def wss_connect(url: str,
                             # print(f"WebSocket connection closed "
                             #       f"with exception {ws.exception()}")
                             return None
-                with open('quotes.json', 'w') as f:
+                with open('/tmp/quotes.json', 'w') as f:
                     json.dump(crypto_pairs, f)
                 print(crypto_pairs)
                 await asyncio.sleep(request_frequency)
 
 
-if __name__ == '__main__':
+def main():
     try:
-        crypto_pairs = {}
         while True:
-            asyncio.run(wss_connect(URL_OKX, PAYLOADS_OKX))
-            asyncio.run(wss_connect(URL_BINANCE, PAYLOADS_BINANCE))
+            asyncio.run(wss_get_quotes(URL_OKX, PAYLOADS_OKX))
+            asyncio.run(wss_get_quotes(URL_BINANCE, PAYLOADS_BINANCE))
     except KeyboardInterrupt:
         sys.exit()
+
+
+if __name__ == '__main__':
+    crypto_pairs = {}
+    main()
