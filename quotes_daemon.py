@@ -1,62 +1,48 @@
-import json
 import asyncio
-from time import sleep
-from typing import Callable
+import json
+import sys
 
 import aiohttp
-from aiohttp import ClientWebSocketResponse
 
 from settings import (
-    URL_OKX, PAYLOADS_OKX, INSTRUMENT_IDS_OKX,
-    URL_BINANCE, PAYLOADS_BINANCE, INSTRUMENT_IDS_BINANCE
+    URL_OKX, PAYLOADS_OKX,
+    URL_BINANCE, PAYLOADS_BINANCE,
+    QUOTES_CODES
 )
-
-
-def extract_quote_okx(data: dict) -> dict:
-    ticker = data['arg']['instId']
-    price = data['data'][0]['last']
-    quote = {ticker: price}
-    return quote
-
-
-def extract_quote_binance(data: dict) -> dict:
-    ticker = data['s']
-    price = data['c']
-    quote = {ticker: price}
-    return quote
 
 
 async def wss_connect(url: str,
                       payloads: list,
-                      instruments_ids: list) -> None:
-
+                      quotes_codes: list = QUOTES_CODES,
+                      request_frequency: int = 1) -> None:
 
     async with aiohttp.ClientSession() as session:
         async with session.ws_connect(url) as ws:
             while True:
-                quotes = instruments_ids.copy()
+                quotes = quotes_codes.copy()
                 for payload in payloads:
                     await ws.send_json(payload)
                     async for msg in ws:
                         if msg.type == aiohttp.WSMsgType.TEXT:
                             data = json.loads(msg.data)
-
                             if 'data' in data:
                                 ticker = data['arg']['instId']
                                 if ticker in quotes:
                                     price = data['data'][0]['last']
+                                    crypto_pairs[ticker] = price
                                     quote = {ticker: price}
-                                    print(quote)
                                     quotes.remove(ticker)
                                     break
 
-                            elif 's' and 'c' in data:
+                            elif 's' in data:
                                 ticker = data['s']
-                                if ticker in instruments_ids:
+                                if ticker in quotes:
                                     price = data['c']
-                                    quote = {ticker: price}
-                                    print(quote)
-                                    instruments_ids.remove(ticker)
+                                    # here need handler to unifi name of quote in JSON
+                                    crypto_pairs[ticker] = price
+                                    # quote = {ticker: price}
+                                    # print(quote)
+                                    quotes.remove(ticker)
                                     break
 
                         elif msg.type in (aiohttp.WSMsgType.ERROR,
@@ -64,38 +50,21 @@ async def wss_connect(url: str,
                                           aiohttp.WSMsgType.CLOSED,
                                           aiohttp.WSMsgType.CLOSING):
                             # logging here
-                            print(f"WebSocket connection closed "
-                                  f"with exception {ws.exception()}")
+                            print('error')
+                            # print(f"WebSocket connection closed "
+                            #       f"with exception {ws.exception()}")
                             return None
-                print()
-                sleep(.001)
+                with open('quotes.json', 'w') as f:
+                    json.dump(crypto_pairs, f)
+                print(crypto_pairs)
+                await asyncio.sleep(request_frequency)
 
 
 if __name__ == '__main__':
-    while True:
-        asyncio.run(wss_connect(URL_OKX, PAYLOADS_OKX, INSTRUMENT_IDS_OKX))
-        asyncio.run(wss_connect(URL_BINANCE, PAYLOADS_BINANCE, INSTRUMENT_IDS_BINANCE))
-
-
-# WSMessage(type=<WSMsgType.TEXT: 1>, data='{"e":"24hrTicker","E":1680476301175,"s":"BTCUSDT","p":"-424.85000000",' \
-#                                          '"P":"-1.490","w":"28207.61144018","x":"28515.09000000","c":"28090.09000000",' \
-#                                          '"Q":"0.04662000","b":"28090.08000000","B":"3.08774000","a":"28090.09000000",' \
-#                                          '"A":"4.26371000","o":"28514.94000000","h":"28555.00000000","l":"27856.43000000",' \
-#                                          '"v":"36765.20363000","q":"1037058578.51416150","O":1680389901175,' \
-#                                          '"C":1680476301175,"F":3067526919,"L":3068454586,"n":927668}', extra='')
-# ticker = data['s']
-# price = data['c']
-
-
-# while True:
-#
-#     for payload in payloads:
-#         await ws.send_json(payload)
-#         async for msg in ws:
-#             if msg.type == aiohttp.WSMsgType.TEXT:
-#                 data = json.loads(msg.data)
-#                 print(serializer(data))
-#                 break
-#             elif msg.type == aiohttp.WSMsgType.ERROR:
-#                 print('bad')
-#                 print(f"WebSocket connection closed with exception {ws.exception()}")
+    try:
+        crypto_pairs = {}
+        while True:
+            asyncio.run(wss_connect(URL_OKX, PAYLOADS_OKX))
+            asyncio.run(wss_connect(URL_BINANCE, PAYLOADS_BINANCE))
+    except KeyboardInterrupt:
+        sys.exit()
