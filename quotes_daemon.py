@@ -23,8 +23,20 @@ def normalize_name(ticker: str) -> str:
 async def wss_get_quotes(url: str,
                       payloads: list,
                       quotes_codes: list = QUOTES_CODES,
-                      request_frequency: int = 1) -> None:
-    """"""
+                      request_frequency: int = 5) -> None:
+    """
+    Establish main-loop WSS connection with given by url
+    exchange server.
+
+    Send requests every request_frequency (default: 5) seconds
+    for quotes from quotes_codes list
+
+    Reading WSS response and write it down in temp-scoket like file
+    into '/tmp/quotes.json'
+
+    comment:
+    This function should be refactored and dived at least for three ones
+    """
     async with aiohttp.ClientSession() as session:
         async with session.ws_connect(url) as ws:
             while True:
@@ -50,8 +62,12 @@ async def wss_get_quotes(url: str,
                                     quotes.remove(ticker)
                                     break
 
-                        elif msg.type in (aiohttp.WSMsgType.ERROR,
-                                          aiohttp.WSMsgType.CLOSE,
+                        elif msg.type == aiohttp.WSMsgType.ERROR:
+                            print('error')
+                            # logging here
+                            return None
+
+                        elif msg.type in (aiohttp.WSMsgType.CLOSE,
                                           aiohttp.WSMsgType.CLOSED,
                                           aiohttp.WSMsgType.CLOSING):
                             # logging here
@@ -66,6 +82,11 @@ async def wss_get_quotes(url: str,
 
 
 def main():
+    """
+    main-loop that switch WSS connection
+    from one exchange to another if connection getting closed
+    or have gotten some exchange-server error
+    """
     try:
         while True:
             asyncio.run(wss_get_quotes(URL_OKX, PAYLOADS_OKX))

@@ -1,3 +1,5 @@
+"""Program constants are here"""
+
 # Both exchanges quote codes
 QUOTES_CODES = ['BTC-USDT', 'ETH-USDT', 'XRP-USDT',
                 'BTCUSDT', 'ETHUSDT', 'XRPUSDT']

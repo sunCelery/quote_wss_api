@@ -7,6 +7,9 @@ app = FastAPI()
 
 @app.websocket('/courses')
 async def courses(websocket: WebSocket):
+    """
+    Endpoint for getting all 3 quotes at once
+    """
     await websocket.accept()
     while True:
         data = await websocket.receive_text()
@@ -17,6 +20,9 @@ async def courses(websocket: WebSocket):
 
 @app.websocket('/{pair_name:str}')
 async def courses(websocket: WebSocket, pair_name: str):
+    """
+    Defines set of endpoints for getting only one quote
+    """
     await websocket.accept()
     while True:
         data = await websocket.receive_text()
