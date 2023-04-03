@@ -4,6 +4,8 @@
 QUOTES_CODES = ['BTC-USDT', 'ETH-USDT', 'XRP-USDT',
                 'BTCUSDT', 'ETHUSDT', 'XRPUSDT']
 
+ACCEPTED_QUOTES = ['BTC-USDT', 'ETH-USDT', 'XRP-USDT']
+
 # OKX constants
 URL_OKX = 'wss://ws.okex.com:8443/ws/v5/public'
 INSTRUMENT_IDS_OKX = ['BTC-USDT', 'ETH-USDT', 'XRP-USDT']

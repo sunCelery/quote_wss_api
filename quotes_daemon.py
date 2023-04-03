@@ -1,6 +1,8 @@
 import asyncio
-import json
 import sys
+import datetime
+import json
+import logging
 
 import aiohttp
 
@@ -21,9 +23,9 @@ def normalize_name(ticker: str) -> str:
 
 
 async def wss_get_quotes(url: str,
-                      payloads: list,
-                      quotes_codes: list = QUOTES_CODES,
-                      request_frequency: int = 5) -> None:
+                         payloads: list,
+                         quotes_codes: list = QUOTES_CODES,
+                         request_frequency: int = 1) -> None:
     """
     Establish main-loop WSS connection with given by url
     exchange server.
@@ -39,6 +41,10 @@ async def wss_get_quotes(url: str,
     """
     async with aiohttp.ClientSession() as session:
         async with session.ws_connect(url) as ws:
+            time_stamp = datetime.datetime.now().strftime('%Y-%M-%d_%X.%f')
+            logging.info(f'[ {time_stamp} ] '
+                         f'WSS connection to {url} established, '
+                         f'collecting quotes every {request_frequency} seconds...')
             while True:
                 quotes = quotes_codes.copy()
                 for payload in payloads:
@@ -63,25 +69,30 @@ async def wss_get_quotes(url: str,
                                     break
 
                         elif msg.type == aiohttp.WSMsgType.ERROR:
-                            print('error')
-                            # logging here
+                            time_stamp = datetime.datetime.now().strftime('%Y-%M-%d_%X.%f')
+                            logging.error(f'[ {time_stamp} ] '
+                                          f'connection to {url} error {ws.exception()}')
+                            logging.warning(f'[ {time_stamp} ] '
+                                            f'trying to switch connection to another server...')
                             return None
 
                         elif msg.type in (aiohttp.WSMsgType.CLOSE,
                                           aiohttp.WSMsgType.CLOSED,
                                           aiohttp.WSMsgType.CLOSING):
-                            # logging here
-                            print('error')
-                            # print(f"WebSocket connection closed "
-                            #       f"with exception {ws.exception()}")
+                            time_stamp = datetime.datetime.now().strftime('%Y-%M-%d_%X.%f')
+                            logging.warning(f'[ {time_stamp} ] '
+                                            f'WSS connection to {url} closed')
+                            logging.warning(f'[ {time_stamp} ] '
+                                            f'trying to switch connection to another server...')
                             return None
+
                 with open('/tmp/quotes.json', 'w') as f:
                     json.dump(crypto_pairs, f)
                 print(crypto_pairs)
                 await asyncio.sleep(request_frequency)
 
 
-def main():
+def main() -> None:
     """
     main-loop that switch WSS connection
     from one exchange to another if connection getting closed
@@ -96,5 +107,8 @@ def main():
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO,
+                        filename="log/quotes_daemon.log",
+                        filemode="w")
     crypto_pairs = {}
     main()
