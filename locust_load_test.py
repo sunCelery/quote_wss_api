@@ -6,11 +6,10 @@ from locust_plugins.users import SocketIOUser
 
 
 class MySocketIOUser(SocketIOUser):
-    # wait_time = 1
     max_wait = 1
     min_wait = 1
-    user_count = 100
-    spawn_rate = 20
+    user_count = 1500
+    spawn_rate = 250
 
     def on_start(self):
         self.connect("ws://localhost:8000/courses")
@@ -54,4 +53,3 @@ class MySocketIOUser(SocketIOUser):
 if __name__ == "__main__":
     host = "http://localhost:8000"
     MySocketIOUser.protocol = "ws"
-    # MySocketIOUser.path = "/courses"
