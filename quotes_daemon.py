@@ -25,7 +25,7 @@ def normalize_name(ticker: str) -> str:
 async def wss_get_quotes(url: str,
                          payloads: list,
                          quotes_codes: list = QUOTES_CODES,
-                         request_frequency: int = 1) -> None:
+                         request_frequency: int = 5) -> None:
     """
     Establish main-loop WSS connection with given by url
     exchange server.
@@ -33,7 +33,7 @@ async def wss_get_quotes(url: str,
     Send requests every request_frequency (default: 5) seconds
     for quotes from quotes_codes list
 
-    Reading WSS response and write it down in temp-scoket like file
+    Reading WSS response and write it down in temp-socket like file
     into '/tmp/quotes.json'
 
     comment:
