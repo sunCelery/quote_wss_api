@@ -12,6 +12,8 @@ aiohttp = "^3.8.4"
 locust = "^2.15.1"
 fastapi = "^0.95.0"
 uvicorn = {extras = ["standard"], version = "^0.21.1"}
+locust-plugins = "^3.2.1"
+playwright = "^1.32.1"
 
 [build-system]
 requires = ["poetry-core"]

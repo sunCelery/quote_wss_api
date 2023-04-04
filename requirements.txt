@@ -1,0 +1,8 @@
+setuptools==67.6.0
+playwright==1.32.1
+locust-plugins==3.2.1
+uvicorn==0.21.1
+aiohttp==3.8.4
+locust==2.15.1
+fastapi==0.95.0
+
