@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+    web:
+        build: .
+        entrypoint: ["/bin/sh","-c"]
+        command:
+            - |
+               python quotes_daemon.py &
+               sleep 2
+               python main.py
+        ports:
+            - 8000:8000

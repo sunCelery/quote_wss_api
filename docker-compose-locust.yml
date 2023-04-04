@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+    web:
+        build: .
+        entrypoint: ["/bin/sh","-c"]
+        command:
+            - |
+               python quotes_daemon.py &
+               sleep 2
+               python main.py &
+               locust -f locust_load_test.py --host=http://localhost:8000 --users 750 --spawn-rate 250 --run-time 30s --headless --only-summary > log/locust_load_test.log 2>&1
+               cat log/locust_load_test.log
+        ports:
+            - 8000:8000
