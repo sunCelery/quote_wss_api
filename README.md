@@ -28,9 +28,9 @@
             - ip:port/courses
                 - http://0.0.0.0:8000/courses
             - ip:port/{pair_name:str}
-                - http://0.0.0.0:8000/BTC-USDT:str
-                - http://0.0.0.0:8000/ETH-USDT:str
-                - http://0.0.0.0:8000/XRP-USDT:str
+                - http://0.0.0.0:8000/BTC-USDT
+                - http://0.0.0.0:8000/ETH-USDT
+                - http://0.0.0.0:8000/XRP-USDT
     - users establish connection via WebSocket
     - need to attach any message to endpoint for getting response
         - any message is: string like 'foo', or JSON like {"foo": "bar"}
