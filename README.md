@@ -9,7 +9,7 @@
 
 ## Description ##
 
-**Program consist of^**
+**Program consist of:**
 
 - **fault-tolerant service for getting quotes**
     - working file: quotes_daemon.py
@@ -25,18 +25,22 @@
     - working file: main.py
     - allows user to connect to endpoints for getting currencies quotes
         - allowed endpoints:
-            ip:port/courses
-            ip:port/{pair_name:str}
-                ip:port/{BTC-USDT:str}
-                ip:port/{ETH-USDT:str}
-                ip:port/{XRP-USDT:str}
+            - ip:port/courses
+                - http://0.0.0.0:8000/courses
+            - ip:port/{pair_name:str}
+                - http://0.0.0.0:8000/BTC-USDT:str
+                - http://0.0.0.0:8000/ETH-USDT:str
+                - http://0.0.0.0:8000/XRP-USDT:str
     - users establish connection via WebSocket
     - need to attach any message to endpoint for getting response
         - any message is: string like 'foo', or JSON like {"foo": "bar"}
 
 - **locust load testing app**
     - working file: locust_load_test.py
-    - perfom load-testing for 1500 requests per second
+    - perfoms load-testing for 1500 requests per second
+    - the test lasts 30 seconds and then print out information into:
+        - file: log/locust_load_test.log
+        - and in terminal
 
 
 ## Install ##
@@ -59,7 +63,7 @@ after command
 ```
 docker-compose up
 ```
-client-server app could be used through  http://0.0.0.0:8000 endpoint
+client-server app could be used through http://0.0.0.0:8000 endpoint
 link to the endpoint will be shown in terminal where you have ran `docker-compose up`
 
 ## To Do ##
