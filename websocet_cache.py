@@ -2,10 +2,10 @@ import json
 import time
 
 
-def get_quotes():
+def read_quotes() -> dict:
     """
     Get quotes from file.
-    This file is created by quotes_daemon.
+    This file is created by quotes_daemon.py
     """
     with open('/tmp/quotes.json', 'r') as f:
         quotes = json.loads(f.read())
@@ -18,7 +18,7 @@ class CachedResponse:
     """
     __instance = None
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args, **kwargs) -> dict:
         if time.time() - self.cache_timestamp < self.lifetime:
             return self.quotes
         else:
@@ -39,5 +39,5 @@ class CachedResponse:
         to treat quotes as valid
         """
         self.lifetime = lifetime
-        self.quotes = get_quotes()
+        self.quotes = read_quotes()
         self.cache_timestamp = time.time()

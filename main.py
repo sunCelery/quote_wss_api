@@ -1,6 +1,5 @@
 import uvicorn
 from fastapi import FastAPI, WebSocket
-
 from websocet_cache import CachedResponse
 
 
@@ -20,7 +19,7 @@ async def courses(websocket: WebSocket):
 
 
 @app.websocket('/{pair_name:str}')
-async def courses(websocket: WebSocket, pair_name: str):
+async def course(websocket: WebSocket, pair_name: str):
     """
     Defines set of endpoints for getting only one quote
     """

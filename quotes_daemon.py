@@ -3,8 +3,10 @@ import sys
 import datetime
 import json
 import logging
+from typing import Dict
 
 import aiohttp
+from aiohttp import ClientWebSocketResponse
 
 from settings import (
     URL_OKX, PAYLOADS_OKX,
@@ -27,7 +29,7 @@ async def wss_get_quotes(url: str,
                          quotes_codes: list = QUOTES_CODES,
                          request_frequency: int = 5) -> None:
     """
-    Establish main-loop WSS connection with given by url
+    Establish infinite-loop WSS connection with given by url
     exchange server.
 
     Send requests every request_frequency (default: 5) seconds
@@ -50,46 +52,67 @@ async def wss_get_quotes(url: str,
                 for payload in payloads:
                     await ws.send_json(payload)
                     async for msg in ws:
-                        if msg.type == aiohttp.WSMsgType.TEXT:
-                            data = json.loads(msg.data)
-                            if 'data' in data:
-                                ticker = data['arg']['instId']
-                                if ticker in quotes:
-                                    price = data['data'][0]['last']
-                                    crypto_pairs[ticker] = price
-                                    quotes.remove(ticker)
-                                    break
+                        match msg.type:
+                            case aiohttp.WSMsgType.TEXT:
 
-                            elif 's' in data:
-                                ticker = data['s']
-                                if ticker in quotes:
-                                    price = data['c']
-                                    crypto_pairs[normalize_name(ticker)] = price
-                                    quotes.remove(ticker)
-                                    break
+                                data = json.loads(msg.data)
 
-                        elif msg.type == aiohttp.WSMsgType.ERROR:
-                            time_stamp = datetime.datetime.now().strftime('%Y-%M-%d_%X.%f')
-                            logging.error(f'[ {time_stamp} ] '
-                                          f'connection to {url} error {ws.exception()}')
-                            logging.warning(f'[ {time_stamp} ] '
-                                            f'trying to switch connection to another server...')
-                            return None
+                                # OKX handler
+                                if 'data' in data:
+                                    ticker = data['arg']['instId']
+                                    if ticker in quotes:
+                                        price = data['data'][0]['last']
+                                        crypto_pairs[ticker] = price
+                                        quotes.remove(ticker)
+                                        break
 
-                        elif msg.type in (aiohttp.WSMsgType.CLOSE,
-                                          aiohttp.WSMsgType.CLOSED,
-                                          aiohttp.WSMsgType.CLOSING):
-                            time_stamp = datetime.datetime.now().strftime('%Y-%M-%d_%X.%f')
-                            logging.warning(f'[ {time_stamp} ] '
-                                            f'WSS connection to {url} closed')
-                            logging.warning(f'[ {time_stamp} ] '
-                                            f'trying to switch connection to another server...')
-                            return None
+                                # Binance handler
+                                elif 's' in data:
+                                    ticker = data['s']
+                                    if ticker in quotes:
+                                        price = data['c']
+                                        crypto_pairs[normalize_name(ticker)] = price
+                                        quotes.remove(ticker)
+                                        break
+
+                            case aiohttp.WSMsgType.ERROR:
+                                return await wss_error(url, ws)
+
+                            case (aiohttp.WSMsgType.CLOSE |
+                                  aiohttp.WSMsgType.CLOSED |
+                                  aiohttp.WSMsgType.CLOSING):
+                                return await wss_close_connection(url)
 
                 with open('/tmp/quotes.json', 'w') as f:
                     json.dump(crypto_pairs, f)
                 print(crypto_pairs)
                 await asyncio.sleep(request_frequency)
+
+
+async def wss_close_connection(url: str) -> None:
+    """
+    function which terminate parent function by returning None
+    if connection closed by server
+    """
+    time_stamp = datetime.datetime.now().strftime('%Y-%M-%d_%X.%f')
+    logging.warning(f'[ {time_stamp} ] '
+                    f'WSS connection to {url} closed')
+    logging.warning(f'[ {time_stamp} ] '
+                    f'trying to switch connection to another server...')
+    return None
+
+
+async def wss_error(url: str, ws: ClientWebSocketResponse) -> None:
+    """
+    function which terminate parent function by returning None
+    if server have responded with an error
+    """
+    time_stamp = datetime.datetime.now().strftime('%Y-%M-%d_%X.%f')
+    logging.error(f'[ {time_stamp} ] '
+                  f'connection to {url} error {ws.exception()}')
+    logging.warning(f'[ {time_stamp} ] '
+                    f'trying to switch connection to another server...')
+    return None
 
 
 def main() -> None:
@@ -110,5 +133,5 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,
                         filename="log/quotes_daemon.log",
                         filemode="w")
-    crypto_pairs = {}
+    crypto_pairs: Dict[str, str] = {}
     main()

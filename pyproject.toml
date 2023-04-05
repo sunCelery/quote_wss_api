@@ -15,6 +15,9 @@ uvicorn = {extras = ["standard"], version = "^0.21.1"}
 locust-plugins = "^3.2.1"
 playwright = "^1.32.1"
 
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.1.1"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
